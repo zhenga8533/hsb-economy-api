@@ -1,7 +1,9 @@
 import logging
 import os
+
 from dotenv import load_dotenv
-from util.functions import *
+
+from util.functions import fetch_data, send_data
 from util.logger import setup_logger
 
 

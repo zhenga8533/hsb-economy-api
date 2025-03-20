@@ -1,7 +1,10 @@
+import logging
 import os
+
 from dotenv import load_dotenv
-from util.functions import *
-from util.items import *
+
+from util.functions import fetch_data, get_data, save_data
+from util.items import update_lbin
 from util.logger import setup_logger
 
 
@@ -29,7 +32,7 @@ def get_active_auction(logger: logging.Logger = None) -> dict:
     auction = get_data("auction.json", logger) or {}
 
     # Parse through all pages
-    for page in range(0, total_pages):
+    for page in range(0, total_pages - 1):
         data = fetch_data(
             "https://api.hypixel.net/v2/skyblock/auctions",
             f"auction_active_{page}",
@@ -48,8 +51,8 @@ def get_active_auction(logger: logging.Logger = None) -> dict:
 
             update_lbin(auction=auction, item=item)
 
-    # Save and return the auction data
-    save_data(auction, "auction.json", logger)
+        # Save and return the auction data
+        save_data(auction, "auction.json", logger)
     return auction
 
 

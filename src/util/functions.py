@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+
 import requests as rq
 from dotenv import load_dotenv
 
@@ -40,7 +41,7 @@ def fetch_data(url: str, name: str, logger: logging.Logger, cache: bool, params:
                 logger.error(f"Attempt {attempt + 1} timed out while fetching data from {url}.")
         except rq.exceptions.RequestException as e:
             if logger:
-                logger.error(f"Attempt {attempt + 1} failed to fetch data from {url}.")
+                logger.error(f"Attempt {attempt + 1} failed to fetch data from {url}. Error: {e}")
 
     logger.error(f"Failed to fetch data from {url} after {RETRIES} attempts.")
     exit(1)

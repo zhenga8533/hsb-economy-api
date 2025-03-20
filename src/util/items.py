@@ -1,9 +1,10 @@
 import base64
 import gzip
 import io
+import json
 from datetime import datetime
+
 from nbtlib import Compound
-from util.functions import *
 
 
 def decode_nbt(item_bytes) -> dict:

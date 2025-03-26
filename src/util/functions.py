@@ -5,6 +5,12 @@ import os
 import requests as rq
 from dotenv import load_dotenv
 
+# Cross-platform imports for locking
+if os.name == "nt":
+    import portalocker
+else:
+    import fcntl
+
 
 def fetch_data(url: str, name: str, logger: logging.Logger, cache: bool, params: dict = None) -> dict:
     """
@@ -91,42 +97,59 @@ def send_data(url: str, data: dict, key: str, logger: logging.Logger) -> dict:
 
 def save_data(data: any, name: str, logger: logging.Logger) -> None:
     """
-    Save data to a file.
+    Save data to a file with cross-platform file locking.
 
-    :param: data - Data to be saved.
-    :param: name - Name of the file to save the data to.
-    :param: logger - Logger to log the data.
+    :param data: Data to be saved.
+    :param name: Name of the file to save the data to.
+    :param logger: Logger to log the data.
     :return: None
     """
-
-    # Make sure all directories exist
     os.makedirs("data", exist_ok=True)
+    path = f"data/{name}"
 
-    # Save the data
-    logger.info(f"Saving data to data/{name}...")
-    with open(f"data/{name}", "w") as file:
-        json.dump(data, file, indent=4)
-    logger.info(f"Data saved to data/{name}.")
+    logger.info(f"Saving data to {path}...")
+    with open(path, "w") as file:
+        if os.name == "nt":
+            portalocker.lock(file, portalocker.LOCK_EX)
+        else:
+            fcntl.flock(file, fcntl.LOCK_EX)
+        try:
+            json.dump(data, file, indent=4)
+        finally:
+            if os.name == "nt":
+                portalocker.unlock(file)
+            else:
+                fcntl.flock(file, fcntl.LOCK_UN)
+    logger.info(f"Data saved to {path}.")
 
 
 def get_data(name: str, logger: logging.Logger) -> any:
     """
-    Get data from a file.
+    Get data from a file with cross-platform file locking.
 
-    :param: name - Name of the file to save the data to.
-    :param: logger - Logger to log the data.
-    :return: None
+    :param name: Name of the file to retrieve the data from.
+    :param logger: Logger to log the data.
+    :return: Data from the file, or None if file does not exist.
     """
+    path = f"data/{name}"
 
-    # Check if the file exists
-    if not os.path.exists(f"data/{name}"):
-        logger.error(f"Failed to get data from data/{name}. File does not exist.")
+    if not os.path.exists(path):
+        logger.error(f"Failed to get data from {path}. File does not exist.")
         return None
 
-    # Get the data
-    logger.info(f"Getting data from data/{name}...")
-    with open(f"data/{name}", "r") as file:
-        data = json.load(file)
-    logger.info(f"Data retrieved from data/{name}.")
+    logger.info(f"Getting data from {path}...")
+    with open(path, "r") as file:
+        if os.name == "nt":
+            portalocker.lock(file, portalocker.LOCK_SH)
+        else:
+            fcntl.flock(file, fcntl.LOCK_SH)
+        try:
+            data = json.load(file)
+        finally:
+            if os.name == "nt":
+                portalocker.unlock(file)
+            else:
+                fcntl.flock(file, fcntl.LOCK_UN)
+    logger.info(f"Data retrieved from {path}.")
 
     return data

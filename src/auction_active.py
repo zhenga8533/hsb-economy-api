@@ -4,7 +4,7 @@ import os
 from dotenv import load_dotenv
 
 from util.functions import fetch_data, get_data, save_data
-from util.items import update_lbin
+from util.items import merge_auctions, update_lbin
 from util.logger import setup_logger
 
 
@@ -29,7 +29,7 @@ def get_active_auction(logger: logging.Logger = None) -> dict:
     save_data(timestamp, "auction_active_timestamp", logger)
 
     # Fetch last parsed auction
-    auction = get_data("auction.json", logger) or {}
+    auction = {}
 
     # Parse through all pages
     for page in range(0, total_pages - 1):
@@ -53,6 +53,10 @@ def get_active_auction(logger: logging.Logger = None) -> dict:
 
         # Save and return the auction data
         save_data(auction, "auction.json", logger)
+
+    # Merge auction data
+    auction = merge_auctions(get_data("auction.json", logger), auction)
+
     return auction
 
 

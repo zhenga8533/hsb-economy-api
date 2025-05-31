@@ -159,3 +159,30 @@ def increment_lbin(auction: dict, increment: int) -> None:
 
             for d in delete:
                 del value[d]
+
+
+def merge_auctions(auction: dict, new_auction: dict) -> dict:
+    """
+    Merge new auction data into the existing auction data.
+
+    :param: auction - Existing auction data
+    :param: new_auction - New auction data to merge
+    :return: Merged auction data
+    """
+
+    for item_id, item in new_auction.items():
+        if item_id not in auction:
+            auction[item_id] = item
+        else:
+            existing_item = auction[item_id]
+            old_lbin = existing_item.get("lbin", float("inf"))
+            old_timestamp = existing_item.get("timestamp", 0)
+            new_lbin = item.get("lbin", float("inf"))
+            new_timestamp = item.get("timestamp", 0)
+
+            # Update if cheaper, 5x more expensive, or older than a week
+            if new_lbin < old_lbin or new_lbin > old_lbin * 5 or (new_timestamp - old_timestamp) > 604_800:
+                auction[item_id]["lbin"] = new_lbin
+                auction[item_id]["timestamp"] = new_timestamp
+
+    return auction

@@ -5,6 +5,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 
 from util.functions import fetch_data, get_data, save_data
+from util.items import merge_auctions
 from util.logger import setup_logger
 
 LIMITED = [
@@ -226,7 +227,7 @@ def get_auction_limited(logger: logging.Logger = None) -> dict:
     """
 
     # Fetch last parsed auction
-    auction = get_data("auction.json", logger) or {}
+    auction = {}
     now = datetime.now().timestamp()
 
     for item in LIMITED:
@@ -238,7 +239,8 @@ def get_auction_limited(logger: logging.Logger = None) -> dict:
             continue
         auction[item] = {"lbin": data[-1]["avg"], "timestamp": now}
 
-    # Save and return the auction data
+    # Merge, save, and return the auction data
+    auction = merge_auctions(get_data("auction.json", logger), auction)
     save_data(auction, "auction.json", logger)
     return auction
 
